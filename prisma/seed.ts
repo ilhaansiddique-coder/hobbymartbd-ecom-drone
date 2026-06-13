@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -8,6 +9,9 @@ const prisma = new PrismaClient({
 
 async function main() {
   console.log("Seeding database...");
+
+  // Hash the demo password at seed time so it can never drift from the plaintext.
+  const adminPassword = await bcrypt.hash("admin123", 12);
 
   // Create categories
   const categoryData = [
@@ -33,12 +37,12 @@ async function main() {
   // Create admin user
   const admin = await prisma.user.upsert({
     where: { email: "admin@droneplacebd.com" },
-    update: {},
+    update: { password: adminPassword, role: "ADMIN" },
     create: {
       name: "Admin",
       email: "admin@droneplacebd.com",
       role: "ADMIN",
-      password: "$2a$12$LJ3m4ys3Lk0TSwHnbfOMiOXPm1QlJ3qGqYkRFyVPqKOmhYZQKjzO", // admin123
+      password: adminPassword,
     },
   });
 
@@ -47,12 +51,12 @@ async function main() {
   // Create staff user
   const staff = await prisma.user.upsert({
     where: { email: "staff@droneplacebd.com" },
-    update: {},
+    update: { password: adminPassword, role: "STAFF" },
     create: {
       name: "Staff",
       email: "staff@droneplacebd.com",
       role: "STAFF",
-      password: "$2a$12$LJ3m4ys3Lk0TSwHnbfOMiOXPm1QlJ3qGqYkRFyVPqKOmhYZQKjzO", // admin123
+      password: adminPassword,
     },
   });
 
