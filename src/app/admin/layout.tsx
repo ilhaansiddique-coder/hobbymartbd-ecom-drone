@@ -3,9 +3,9 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Package, ShoppingCart, Tags, Users, Star, LogOut, Loader2 } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Tags, Users, Star, FileText, LogOut, Loader2, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -14,12 +14,14 @@ const navItems = [
   { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
+  { href: "/admin/blog", label: "Blog", icon: FileText },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -47,6 +49,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-[80vh]">
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <aside className="fixed left-0 top-0 flex h-full w-64 flex-col bg-white p-4 shadow-xl">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
+              <button onClick={() => setSidebarOpen(false)} className="rounded-lg p-2 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="flex-1 space-y-1">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive ? "bg-blue-100 text-blue-700" : "text-gray-700 hover:bg-gray-200"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </aside>
+        </div>
+      )}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="fixed left-4 top-4 z-40 rounded-lg bg-white p-2 shadow-lg lg:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
       <aside className="hidden w-64 shrink-0 border-r bg-gray-50 p-4 lg:flex lg:flex-col">
         <div className="mb-6">
           <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>

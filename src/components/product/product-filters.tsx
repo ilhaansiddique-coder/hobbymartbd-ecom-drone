@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,10 @@ interface ProductFiltersProps {
 
 export function ProductFilters({ categories, currentCategory }: ProductFiltersProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +85,39 @@ export function ProductFilters({ categories, currentCategory }: ProductFiltersPr
             </Link>
           ))}
         </div>
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-gray-900">Price Range</h3>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            placeholder="Min"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+          />
+          <span className="text-gray-400">-</span>
+          <Input
+            type="number"
+            placeholder="Max"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+          />
+        </div>
+        <Button
+          size="sm"
+          className="mt-2 w-full"
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (minPrice) params.set("minPrice", minPrice);
+            else params.delete("minPrice");
+            if (maxPrice) params.set("maxPrice", maxPrice);
+            else params.delete("maxPrice");
+            router.push(`/products?${params.toString()}`);
+          }}
+        >
+          Apply
+        </Button>
       </div>
     </div>
   );

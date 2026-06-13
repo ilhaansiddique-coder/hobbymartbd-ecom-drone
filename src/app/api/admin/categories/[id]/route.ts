@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { checkAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 
@@ -8,17 +7,17 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || (role !== "ADMIN" && role !== "STAFF")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await checkAdmin();
+  if (auth.error) return auth.error;
 
   const { id } = await params;
 
   const category = await prisma.category.findUnique({
     where: { id },
-    include: { _count: { select: { products: true } } },
+    include: {
+      _count: { select: { products: true } },
+      parent: { select: { name: true } },
+    },
   });
 
   if (!category) {
@@ -32,11 +31,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || (role !== "ADMIN" && role !== "STAFF")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await checkAdmin();
+  if (auth.error) return auth.error;
 
   const { id } = await params;
   const { name, slug, description, image, parentId } = await req.json();
@@ -63,11 +59,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await checkAdmin(["ADMIN"]);
+  if (auth.error) return auth.error;
 
   const { id } = await params;
 

@@ -1,20 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UploadDropzone } from "@/lib/uploadthing";
+import { RichEditor } from "@/components/admin/rich-editor";
+import { slugify } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+
+function FormSkeleton() {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-6">
+        <Skeleton className="h-8 w-48" />
+      </div>
+      <div className="space-y-4 rounded-2xl border bg-white p-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i}>
+            <Skeleton className="mb-1 h-4 w-24" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [form, setForm] = useState({
     name: "",
+    slug: "",
+    sku: "",
     description: "",
     price: "",
     salePrice: "",
@@ -24,9 +51,24 @@ export default function EditProductPage() {
     featured: false,
     published: true,
     categoryIds: [] as string[],
+    metaTitle: "",
+    metaDescription: "",
   });
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const initialFormRef = useRef("");
+
+  const isDirty = initialFormRef.current ? JSON.stringify(form) !== initialFormRef.current : false;
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   useEffect(() => {
     const load = async () => {
@@ -41,18 +83,24 @@ export default function EditProductPage() {
 
         const prodData = await prodRes.json();
         const p = prodData.product;
-        setForm({
+        const loaded = {
           name: p.name || "",
+          slug: p.slug || "",
+          sku: p.sku || "",
           description: p.description || "",
           price: p.price?.toString() || "",
           salePrice: p.salePrice?.toString() || "",
           stock: p.stock?.toString() || "0",
-          images: (p.images || []).join(", "),
+          images: (p.images || []).join(","),
           specs: p.specs ? JSON.stringify(p.specs, null, 2) : "",
           featured: p.featured || false,
           published: p.published ?? true,
           categoryIds: (p.categories || []).map((c: any) => c.category?.id || c.id),
-        });
+          metaTitle: p.metaTitle || "",
+          metaDescription: p.metaDescription || "",
+        };
+        setForm(loaded);
+        initialFormRef.current = JSON.stringify(loaded);
       } catch {
         toast.error("Failed to load product");
       } finally {
@@ -61,6 +109,21 @@ export default function EditProductPage() {
     };
     load();
   }, [params.id]);
+
+  const updateField = (field: string, value: unknown) => {
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "name" && !slugManuallyEdited) {
+        next.slug = slugify(value as string);
+      }
+      return next;
+    });
+  };
+
+  const handleSlugRegenerate = () => {
+    setSlugManuallyEdited(false);
+    setForm((prev) => ({ ...prev, slug: slugify(prev.name) }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +145,7 @@ export default function EditProductPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
+          slug: form.slug || undefined,
           description: form.description,
           price: form.price,
           salePrice: form.salePrice || null,
@@ -91,6 +155,8 @@ export default function EditProductPage() {
           featured: form.featured,
           published: form.published,
           categoryIds: form.categoryIds,
+          metaTitle: form.metaTitle || null,
+          metaDescription: form.metaDescription || null,
         }),
       });
 
@@ -118,33 +184,57 @@ export default function EditProductPage() {
   };
 
   if (pageLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <FormSkeleton />;
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Edit Product</h1>
+      <div className="mb-6 flex items-center gap-4">
+        <Link href="/admin/products" className="text-gray-400 hover:text-gray-600">
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-white p-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Name</label>
           <Input
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => updateField("name", e.target.value)}
             required
           />
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Slug
+            {slugManuallyEdited && (
+              <button
+                type="button"
+                onClick={handleSlugRegenerate}
+                className="ml-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Reset to auto
+              </button>
+            )}
+          </label>
+          <Input
+            value={form.slug}
+            onChange={(e) => {
+              setSlugManuallyEdited(true);
+              setForm((prev) => ({ ...prev, slug: e.target.value }));
+            }}
+          />
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-gray-700">Description</label>
-          <Textarea
+          <RichEditor
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={4}
+            onChange={(value) => setForm((prev) => ({ ...prev, description: value }))}
+            placeholder="Write product description..."
           />
         </div>
 
@@ -155,7 +245,7 @@ export default function EditProductPage() {
               type="number"
               step="0.01"
               value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
+              onChange={(e) => updateField("price", e.target.value)}
               required
             />
           </div>
@@ -165,37 +255,78 @@ export default function EditProductPage() {
               type="number"
               step="0.01"
               value={form.salePrice}
-              onChange={(e) => setForm({ ...form, salePrice: e.target.value })}
+              onChange={(e) => setForm((prev) => ({ ...prev, salePrice: e.target.value }))}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <label className="block text-sm font-medium text-gray-700">SKU</label>
+            <Input
+              value={form.sku}
+              disabled
+              placeholder="auto-generated"
+            />
+            <p className="mt-1 text-xs text-gray-400">SKU is auto-generated and cannot be changed</p>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700">Stock</label>
             <Input
               type="number"
               value={form.stock}
-              onChange={(e) => setForm({ ...form, stock: e.target.value })}
+              onChange={(e) => updateField("stock", e.target.value)}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Images (comma-separated URLs)</label>
-          <Input
-            value={form.images}
-            onChange={(e) => setForm({ ...form, images: e.target.value })}
-            placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
+          <div className="rounded-xl border border-dashed border-gray-300 p-4 bg-gray-50/50">
+            <UploadDropzone
+              endpoint="productImage"
+              onClientUploadComplete={(res) => {
+                const urls = res.map((file) => file.url).join(",");
+                setForm((prev) => ({
+                  ...prev,
+                  images: prev.images ? `${prev.images},${urls}` : urls,
+                }));
+                toast.success("Image(s) uploaded successfully!");
+              }}
+              onUploadError={(error: Error) => {
+                toast.error(`ERROR! ${error.message}`);
+              }}
+              className="ut-button:bg-blue-600 ut-button:ut-readying:bg-blue-600/50 ut-button:hover:bg-blue-700 ut-label:text-blue-600 border-none"
+            />
+          </div>
+          {form.images && (
+            <div className="mt-4 flex flex-wrap gap-4">
+              {form.images.split(",").map((url, idx) => (
+                <div key={idx} className="relative h-24 w-24 overflow-hidden rounded-lg border shadow-sm">
+                  <Image src={url} alt={`Preview ${idx}`} fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newImages = form.images.split(",").filter((_, i) => i !== idx).join(",");
+                      setForm({ ...form, images: newImages });
+                    }}
+                    className="absolute right-1 top-1 rounded-full bg-red-500 p-1 text-white opacity-80 hover:opacity-100"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Specs (JSON)</label>
-          <Textarea
+          <Input
             value={form.specs}
-            onChange={(e) => setForm({ ...form, specs: e.target.value })}
-            rows={4}
+            onChange={(e) => setForm((prev) => ({ ...prev, specs: e.target.value }))}
             placeholder='{"brand": "DJI", "weight": "249g"}'
           />
         </div>
@@ -235,6 +366,28 @@ export default function EditProductPage() {
               onCheckedChange={(checked) => setForm({ ...form, published: checked === true })}
             />
             <Label htmlFor="published">Published</Label>
+          </div>
+        </div>
+
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">SEO</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Meta Title</label>
+              <Input
+                value={form.metaTitle}
+                onChange={(e) => setForm((prev) => ({ ...prev, metaTitle: e.target.value }))}
+                placeholder="SEO title (optional)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Meta Description</label>
+              <Input
+                value={form.metaDescription}
+                onChange={(e) => setForm((prev) => ({ ...prev, metaDescription: e.target.value }))}
+                placeholder="SEO description (optional)"
+              />
+            </div>
           </div>
         </div>
 

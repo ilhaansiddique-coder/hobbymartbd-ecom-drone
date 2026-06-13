@@ -1,11 +1,11 @@
-export function HomeReviews() {
-  const reviews = [
-    { name: "Rafiq Hasan", text: "Best drone shop in Bangladesh! Got my DJI Mini 4 Pro at a great price.", rating: 5 },
-    { name: "Nadia Islam", text: "Excellent service and fast delivery. Highly recommended!", rating: 5 },
-    { name: "Tanvir Ahmed", text: "Great collection of drones and accessories. Very helpful staff.", rating: 5 },
-    { name: "Sadia Rahman", text: "Ordered online, delivered next day. Amazing experience!", rating: 5 },
-  ];
+interface HomeReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  user: { name: string | null; image: string | null };
+}
 
+export function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 lg:px-8">
       <div className="mb-8 text-center">
@@ -13,8 +13,8 @@ export function HomeReviews() {
         <p className="mt-1 text-gray-500">Trusted by drone enthusiasts across Bangladesh</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {reviews.map((review, i) => (
-          <div key={i} className="rounded-2xl border bg-white p-6">
+        {reviews.map((review) => (
+          <div key={review.id} className="rounded-2xl border bg-white p-6">
             <div className="mb-3 flex">
               {Array.from({ length: 5 }).map((_, j) => (
                 <svg
@@ -27,8 +27,8 @@ export function HomeReviews() {
                 </svg>
               ))}
             </div>
-            <p className="mb-3 text-sm text-gray-600">&ldquo;{review.text}&rdquo;</p>
-            <p className="text-sm font-medium text-gray-900">{review.name}</p>
+            <p className="mb-3 text-sm text-gray-600">&ldquo;{review.comment || "No comment provided."}&rdquo;</p>
+            <p className="text-sm font-medium text-gray-900">{review.user.name || "Anonymous"}</p>
           </div>
         ))}
       </div>

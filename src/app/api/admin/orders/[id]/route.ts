@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@/generated/prisma/enums";
+import { sendEmail, orderStatusEmail } from "@/lib/email";
 
 export async function GET(
   _req: NextRequest,
@@ -65,6 +66,19 @@ export async function PUT(
     where: { id },
     data: { status },
   });
+
+  try {
+    const fullOrder = await prisma.order.findUnique({
+      where: { id },
+      include: { user: { select: { email: true } } },
+    });
+    if (fullOrder?.user?.email) {
+      const emailData = orderStatusEmail(fullOrder.user.email, order.id, order.status);
+      await sendEmail(emailData);
+    }
+  } catch (err) {
+    console.error("Failed to send status email:", err);
+  }
 
   return NextResponse.json({ order: { ...order, total: Number(order.total) } });
 }

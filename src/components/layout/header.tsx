@@ -4,12 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { ShoppingCart, Heart, User, Menu, X, Search, ChevronDown, GitCompare } from "lucide-react";
+import { ShoppingCart, Heart, User, Menu, X, Search, ChevronDown, GitCompare, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { useCompare } from "@/lib/hooks/use-compare";
+import { useTheme } from "@/components/theme-provider";
 
 const categories = [
   { name: "DJI", slug: "dji" },
@@ -26,6 +27,7 @@ export function Header() {
   const { items: cartItems } = useCart();
   const { items: wishlistItems } = useWishlist();
   const { items: compareItems } = useCompare();
+  const { theme, setTheme } = useTheme();
 
   const cartCount = cartItems.reduce((a, b) => a + b.quantity, 0);
 
@@ -97,6 +99,13 @@ export function Header() {
           
           <button onClick={() => setSearchOpen(!searchOpen)} className="rounded-lg p-2 hover:bg-gray-100">
             <Search className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="rounded-lg p-2 hover:bg-gray-100"
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
           <Link href="/compare" className="relative rounded-lg p-2 hover:bg-gray-100 max-lg:hidden">
             <GitCompare className="h-5 w-5" />

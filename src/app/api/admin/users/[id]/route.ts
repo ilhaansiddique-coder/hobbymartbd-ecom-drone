@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { checkAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@/generated/prisma/enums";
 
@@ -8,11 +7,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || (role !== "ADMIN" && role !== "STAFF")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { error } = await checkAdmin(["ADMIN", "STAFF"]);
+  if (error) return error;
 
   const { id } = await params;
 
@@ -49,22 +45,35 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || (role !== "ADMIN" && role !== "STAFF")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const sessionResult = await checkAdmin(["ADMIN", "STAFF"]);
+  if (sessionResult.error) return sessionResult.error;
+
+  const session = sessionResult.session!;
+  const currentRole = (session.user as any).role;
 
   const { id } = await params;
-  const { role: newRole } = await req.json();
+  const body = await req.json();
 
-  if (!Object.values(Role).includes(newRole)) {
-    return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  const data: any = {};
+
+  if (body.role !== undefined) {
+    if (!Object.values(Role).includes(body.role)) {
+      return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+    // Only ADMIN can set role to ADMIN (privilege escalation guard)
+    if (body.role === "ADMIN" && currentRole !== "ADMIN") {
+      return NextResponse.json({ error: "Only admins can assign the ADMIN role" }, { status: 403 });
+    }
+    data.role = body.role;
   }
+
+  if (body.name !== undefined) data.name = body.name;
+  if (body.phone !== undefined) data.phone = body.phone;
+  if (body.address !== undefined) data.address = body.address;
 
   const user = await prisma.user.update({
     where: { id },
-    data: { role: newRole },
+    data,
     select: {
       id: true,
       name: true,
@@ -86,11 +95,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as any)?.role;
-  if (!session || role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const { error } = await checkAdmin(["ADMIN"]);
+  if (error) return error;
 
   const { id } = await params;
 

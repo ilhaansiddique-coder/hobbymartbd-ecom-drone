@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
@@ -42,8 +43,30 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <p className="text-gray-500">Loading orders...</p>
+      <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
+        <Skeleton className="mb-8 h-8 w-48" />
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border bg-white p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 2 }).map((_, j) => (
+                  <div key={j} className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 shrink-0 rounded-lg" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Skeleton className="mt-4 h-6 w-32 ml-auto" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

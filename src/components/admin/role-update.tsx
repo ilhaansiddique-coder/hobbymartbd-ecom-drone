@@ -42,9 +42,6 @@ export function UserRoleSelect({ userId, currentRole }: { userId: string; curren
   );
 }
 
-export function UserDeleteButton({ userId, currentRole }: { userId: string; currentRole: string }) {
-  if (currentRole === "ADMIN") {
-    return <DeleteButton url={`/api/admin/users/${userId}`} label="Delete" />;
-  }
+export function UserDeleteButton({ userId }: { userId: string }) {
   return <DeleteButton url={`/api/admin/users/${userId}`} label="Delete" />;
 }

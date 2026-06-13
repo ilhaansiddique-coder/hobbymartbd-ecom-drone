@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { UploadDropzone } from "@/lib/uploadthing";
 import Image from "next/image";
+import { slugify } from "@/lib/utils";
 
 export default function NewCategoryPage() {
   const router = useRouter();
   const [parentCategories, setParentCategories] = useState<{ id: string; name: string }[]>([]);
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [parentId, setParentId] = useState("");
@@ -27,6 +29,12 @@ export default function NewCategoryPage() {
       .catch(() => toast.error("Failed to load categories"));
   }, []);
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    setSlug(slugify(val));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,6 +44,7 @@ export default function NewCategoryPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          slug: slug || undefined,
           description,
           image: image || undefined,
           parentId: parentId || undefined,
@@ -62,17 +71,22 @@ export default function NewCategoryPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-white p-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          <Label>Name</Label>
+          <Input value={name} onChange={handleNameChange} required />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <Label>Slug</Label>
+          <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
+        </div>
+
+        <div>
+          <Label>Description</Label>
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+          <Label className="mb-2 block">Image</Label>
           <div className="rounded-xl border border-dashed border-gray-300 p-4 bg-gray-50/50">
             <UploadDropzone
               endpoint="productImage"
@@ -103,7 +117,7 @@ export default function NewCategoryPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Parent Category</label>
+          <Label>Parent Category</Label>
           <Select value={parentId} onValueChange={(v) => setParentId(v ?? "")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="None (top level)" />

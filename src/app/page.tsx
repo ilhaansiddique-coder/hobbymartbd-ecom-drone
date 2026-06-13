@@ -7,7 +7,7 @@ import { HomeReviews } from "@/components/home/home-reviews";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [categories, featuredProducts, newProducts] = await Promise.all([
+  const [categories, featuredProducts, newProducts, recentReviews] = await Promise.all([
     prisma.category.findMany({
       include: { _count: { select: { products: true } } },
       orderBy: { name: "asc" },
@@ -29,6 +29,11 @@ export default async function HomePage() {
         categories: { include: { category: { select: { name: true, slug: true } } } },
         reviews: { select: { rating: true } },
       },
+    }),
+    prisma.review.findMany({
+      include: { user: { select: { name: true, image: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 4,
     }),
   ]);
 
@@ -74,7 +79,7 @@ export default async function HomePage() {
           <ProductGrid products={mapProducts(newProducts)} />
         </div>
       </section>
-      <HomeReviews />
+      <HomeReviews reviews={recentReviews} />
     </div>
   );
 }

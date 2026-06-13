@@ -2,6 +2,7 @@
 
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { ProductGrid } from "@/components/product/product-grid";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,18 @@ export default function WishlistPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center">
-        <p className="text-gray-500">Loading...</p>
+      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+        <Skeleton className="mb-8 h-8 w-64" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border p-4">
+              <Skeleton className="aspect-square w-full rounded-xl" />
+              <Skeleton className="mt-4 h-4 w-3/4" />
+              <Skeleton className="mt-2 h-4 w-1/2" />
+              <Skeleton className="mt-3 h-9 w-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

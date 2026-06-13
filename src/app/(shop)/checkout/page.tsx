@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/hooks/use-cart";
 import { toast } from "sonner";
@@ -48,8 +49,16 @@ export default function CheckoutPage() {
 
   if (status === "loading") {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <p>Loading...</p>
+      <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
+        <Skeleton className="mb-8 h-8 w-48" />
+        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-64 w-full rounded-2xl" />
+          </div>
+          <div className="mt-8 lg:mt-0">
+            <Skeleton className="h-48 w-full rounded-2xl" />
+          </div>
+        </div>
       </div>
     );
   }

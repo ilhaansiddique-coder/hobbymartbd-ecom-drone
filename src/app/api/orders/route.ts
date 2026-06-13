@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, orderConfirmationEmail } from "@/lib/email";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -56,6 +57,22 @@ export async function POST(req: NextRequest) {
     },
     include: { items: true },
   });
+
+  try {
+    const emailData = orderConfirmationEmail(
+      email || session.user.email || "",
+      order.id,
+      order.items.map((item: any) => ({
+        name: products.find((p) => p.id === item.productId)?.name || "Product",
+        quantity: item.quantity,
+        price: Number(products.find((p) => p.id === item.productId)?.salePrice || products.find((p) => p.id === item.productId)?.price || 0),
+      })),
+      Number(total),
+    );
+    await sendEmail(emailData);
+  } catch (err) {
+    console.error("Failed to send email:", err);
+  }
 
   return NextResponse.json({ order });
 }
