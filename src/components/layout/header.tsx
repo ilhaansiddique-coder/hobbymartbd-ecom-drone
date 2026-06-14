@@ -11,6 +11,7 @@ import { useCart } from "@/lib/hooks/use-cart";
 import { useWishlist } from "@/lib/hooks/use-wishlist";
 import { useCompare } from "@/lib/hooks/use-compare";
 import { useTheme } from "@/components/theme-provider";
+import type { SiteSettings } from "@/lib/site-config";
 
 const categories = [
   { name: "DJI", slug: "dji" },
@@ -20,7 +21,7 @@ const categories = [
   { name: "Camera", slug: "camera" },
 ];
 
-export function Header() {
+export function Header({ settings }: { settings: SiteSettings }) {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: session, status } = useSession();
@@ -37,8 +38,8 @@ export function Header() {
       {/* Top bar */}
       <div className="hidden lg:flex h-9 items-center justify-between bg-gray-900 px-6 text-xs text-gray-300">
         <div className="flex items-center gap-4">
-          <span>📞 +880 170 771 9909</span>
-          <span>✉️ droneplace32@gmail.com</span>
+          {settings.phone && <span>📞 {settings.phone}</span>}
+          {settings.email && <span>✉️ {settings.email}</span>}
         </div>
         <div className="flex items-center gap-4">
           <Link href="/track-order" className="hover:text-white">Track Order</Link>
@@ -48,8 +49,8 @@ export function Header() {
       {/* Main header */}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="Hobby Mart Logo" width={40} height={40} className="object-contain" />
-          <span className="text-xl font-bold text-gray-900">Hobby <span className="text-blue-600">Mart</span></span>
+          <Image src={settings.logoUrl || "/logo.png"} alt={`${settings.companyName} Logo`} width={40} height={40} className="object-contain" />
+          <span className="text-xl font-bold text-gray-900">{settings.companyName}</span>
         </Link>
 
         {/* Desktop Nav */}

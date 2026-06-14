@@ -164,6 +164,25 @@ model BlogPost {
   updatedAt DateTime @updatedAt
 }
 
+model SiteSettings {
+  id             String   @id @default("singleton")
+  companyName    String   @default("HobbyMart")
+  logoUrl        String?
+  email          String   @default("")
+  phone          String   @default("")
+  address        String   @default("")
+  whatsappNumber String   @default("")
+  whatsappText   String   @default("Hello! I have a question about your products.")
+  primaryColor   String   @default("#2563eb")
+  fontFamily     String   @default("sans")
+  footerTagline  String   @default("")
+  facebookUrl    String?
+  instagramUrl   String?
+  youtubeUrl     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 enum Role {
   USER
   STAFF

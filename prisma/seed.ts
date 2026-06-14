@@ -243,6 +243,26 @@ async function main() {
   }
 
   console.log(`Created ${products.length} products`);
+
+  // Site settings (single row) — initial branding/contact, editable from the dashboard.
+  await prisma.siteSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: {
+      id: "singleton",
+      companyName: "HobbyMart",
+      email: "droneplace32@gmail.com",
+      phone: "+880 170 771 9909",
+      address: "Shop-3057, Level-4, Shimanto Shambhar, Dhanmondi-2, Dhaka",
+      whatsappNumber: "8801707719909",
+      whatsappText: "Hello! I have a question about your drones.",
+      primaryColor: "#2563eb",
+      fontFamily: "sans",
+      footerTagline: "Bangladesh's premier drone shop. DJI drones, professional drones, and accessories at the best prices.",
+    },
+  });
+  console.log("Created site settings");
+
   console.log("Seeding complete!");
 }
 
