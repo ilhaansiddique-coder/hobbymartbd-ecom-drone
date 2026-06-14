@@ -6,6 +6,11 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # These are server-only secrets, stored in Netlify's env settings and used at
+  # runtime (never sent to the client). They appear in the server function bundle,
+  # which trips Netlify's secret scanner — omit them to avoid false-positive
+  # "Exposed secrets detected" build failures.
+  SECRETS_SCAN_OMIT_KEYS = "DATABASE_URL,NEXTAUTH_SECRET,NEXTAUTH_URL,BLOB_READ_WRITE_TOKEN"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
