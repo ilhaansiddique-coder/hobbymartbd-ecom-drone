@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/components/admin/local-upload";
 import Image from "next/image";
 import { slugify } from "@/lib/utils";
 
