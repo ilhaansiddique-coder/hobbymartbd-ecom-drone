@@ -94,7 +94,7 @@ export default async function AdminOrderDetailPage({
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">Name</dt>
-              <dd className="text-gray-900">{order.user.name || "N/A"}</dd>
+              <dd className="text-gray-900">{order.user?.name || "Guest"}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Email</dt>

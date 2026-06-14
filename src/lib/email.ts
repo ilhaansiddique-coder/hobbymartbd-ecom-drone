@@ -1,5 +1,7 @@
-// Email notification utility
-// In production, replace with actual email service (SendGrid, Resend, etc.)
+// Email utility — sends via Resend when RESEND_API_KEY is set, otherwise logs
+// to the console (so dev/preview works without an email account).
+// Setup: create a free account at resend.com, add RESEND_API_KEY and EMAIL_FROM
+// (e.g. "HobbyMart <orders@yourdomain.com>") to your env vars.
 
 export type EmailData = {
   to: string;
@@ -7,17 +9,33 @@ export type EmailData = {
   html: string;
 };
 
-export async function sendEmail(data: EmailData) {
-  // For now, log to console
-  console.log("=== EMAIL NOTIFICATION ===");
-  console.log("To:", data.to);
-  console.log("Subject:", data.subject);
-  console.log("Body:", data.html);
-  console.log("=== END EMAIL ===");
-  
-  // In production, integrate with an email provider:
-  // const res = await fetch("https://api.sendgrid.com/v3/mail/send", { ... });
-  // const res = await resend.emails.send({ ... });
+export async function sendEmail(data: EmailData): Promise<void> {
+  if (!data.to) return;
+
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM || "HobbyMart <onboarding@resend.dev>";
+
+  if (!apiKey) {
+    console.log("=== EMAIL (no RESEND_API_KEY, not sent) ===");
+    console.log("To:", data.to, "| Subject:", data.subject);
+    return;
+  }
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: data.to, subject: data.subject, html: data.html }),
+    });
+    if (!res.ok) {
+      console.error("Resend email failed:", res.status, await res.text());
+    }
+  } catch (err) {
+    console.error("Email send error:", err);
+  }
 }
 
 export function orderConfirmationEmail(userEmail: string, orderId: string, items: { name: string; quantity: number; price: number }[], total: number) {

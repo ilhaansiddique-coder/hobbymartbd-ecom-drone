@@ -63,15 +63,6 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!session) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <h1 className="mb-4 text-2xl font-bold">Please sign in to checkout</h1>
-        <Link href="/login"><Button>Sign In</Button></Link>
-      </div>
-    );
-  }
-
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
@@ -95,13 +86,19 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
+      const result = await res.json();
 
       if (res.ok) {
-        await clearCart();
-        toast.success("Order placed successfully!");
-        router.push("/orders");
+        clearCart();
+        if (session) {
+          toast.success("Order placed successfully!");
+          router.push("/orders");
+        } else {
+          toast.success(`Order placed! Your order ID is ${result.order.id} — save it to track your order.`);
+          router.push("/track-order");
+        }
       } else {
-        toast.error("Failed to place order");
+        toast.error(result.error || "Failed to place order");
       }
     } catch {
       toast.error("Something went wrong");

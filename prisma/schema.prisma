@@ -115,8 +115,8 @@ model Review {
 
 model Order {
   id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
   items         OrderItem[]
   total         Decimal     @db.Decimal(10, 2)
   status        OrderStatus @default(PENDING)

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ShoppingCart, Heart, User, Menu, X, Search, ChevronDown, GitCompare, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,19 @@ const categories = [
 ];
 
 export function Header({ settings }: { settings: SiteSettings }) {
+  const router = useRouter();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    router.push(`/products?search=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
   const { data: session, status } = useSession();
   const { items: cartItems } = useCart();
   const { items: wishlistItems } = useWishlist();
@@ -143,17 +155,19 @@ export function Header({ settings }: { settings: SiteSettings }) {
       {/* Search overlay */}
       {searchOpen && (
         <div className="border-t bg-white px-4 py-4">
-          <div className="mx-auto max-w-2xl">
+          <form className="mx-auto max-w-2xl" onSubmit={submitSearch}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products... (press Enter)"
                 className="w-full rounded-lg border bg-gray-50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 autoFocus
               />
             </div>
-          </div>
+          </form>
         </div>
       )}
 

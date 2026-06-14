@@ -72,8 +72,10 @@ export async function PUT(
       where: { id },
       include: { user: { select: { email: true } } },
     });
-    if (fullOrder?.user?.email) {
-      const emailData = orderStatusEmail(fullOrder.user.email, order.id, order.status);
+    // Prefer the account email; fall back to the order's own email (guest orders).
+    const to = fullOrder?.user?.email || fullOrder?.email;
+    if (to) {
+      const emailData = orderStatusEmail(to, order.id, order.status);
       await sendEmail(emailData);
     }
   } catch (err) {
