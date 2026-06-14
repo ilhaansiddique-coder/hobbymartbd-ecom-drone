@@ -107,16 +107,16 @@ export function ProductCard({ product }: ProductCardProps) {
             Add to Cart
           </Button>
           <button
-            onClick={() => toggleItem(product.id)}
-            className={`rounded-lg p-1.5 transition-colors ${
+            onClick={() => toggleItem({ id: product.id, name: product.name, slug: product.slug, price: product.price, salePrice: product.salePrice, images: product.images })}
+            className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
               isInWishlist(product.id) ? "text-red-500" : "text-gray-400 hover:text-red-500"
             }`}
           >
             <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
           </button>
           <button
-            onClick={() => toggleCompare(product.id)}
-            className={`rounded-lg p-1.5 transition-colors ${
+            onClick={() => toggleCompare({ id: product.id, name: product.name, slug: product.slug, price: product.price, salePrice: product.salePrice, images: product.images, specs: (product as { specs?: Record<string, string> | null }).specs ?? null })}
+            className={`cursor-pointer rounded-lg p-1.5 transition-colors ${
               isInCompare(product.id) ? "text-blue-500" : "text-gray-400 hover:text-blue-500"
             }`}
           >

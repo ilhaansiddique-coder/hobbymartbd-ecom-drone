@@ -1,45 +1,45 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { readList, writeList, subscribe } from "@/lib/local-store";
+
+export type WishlistItem = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  salePrice: number | null;
+  images: string[];
+};
+
+const KEY = "hobbymart_wishlist";
 
 export function useWishlist() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { data: session } = useSession();
 
-  const fetchWishlist = useCallback(async () => {
-    try {
-      const res = await fetch("/api/wishlist");
-      const data = await res.json();
-      setItems(data.items || []);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
+  const refresh = useCallback(() => {
+    setItems(readList<WishlistItem>(KEY));
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (session) fetchWishlist();
-    else setLoading(false);
-  }, [session, fetchWishlist]);
+    refresh();
+    return subscribe(KEY, refresh);
+  }, [refresh]);
 
-  const toggleItem = async (productId: string) => {
-    if (!session) {
-      window.location.href = "/login";
-      return;
+  // Accepts a full product (to add) or an id string (to remove existing).
+  const toggleItem = (arg: string | WishlistItem) => {
+    const id = typeof arg === "string" ? arg : arg.id;
+    const current = readList<WishlistItem>(KEY);
+    if (current.some((i) => i.id === id)) {
+      writeList(KEY, current.filter((i) => i.id !== id));
+    } else if (typeof arg !== "string") {
+      writeList(KEY, [...current, arg]);
     }
-    const exists = items.find((i) => i.id === productId);
-    const res = await fetch("/api/wishlist", {
-      method: exists ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId }),
-    });
-    if (res.ok) fetchWishlist();
   };
 
-  const isInWishlist = (productId: string) => items.some((i) => i.id === productId);
+  const isInWishlist = (id: string) => items.some((i) => i.id === id);
 
   return { items, loading, toggleItem, isInWishlist };
 }

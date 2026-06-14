@@ -222,7 +222,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => toggleItem(product.id)}
+            onClick={() => toggleItem({ id: product.id, name: product.name, slug: product.slug, price: product.price, salePrice: product.salePrice, images: product.images })}
             className={isInWishlist(product.id) ? "text-red-500 border-red-200" : ""}
           >
             <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
@@ -230,7 +230,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => toggleCompare(product.id)}
+            onClick={() => toggleCompare({ id: product.id, name: product.name, slug: product.slug, price: product.price, salePrice: product.salePrice, images: product.images, specs: (product.specs as Record<string, string> | null) ?? null })}
             className={isInCompare(product.id) ? "text-blue-500 border-blue-200" : ""}
           >
             <BarChart3 className="h-5 w-5" />

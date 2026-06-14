@@ -1,35 +1,48 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
+import { readList, writeList, subscribe } from "@/lib/local-store";
+
+export type CompareItem = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  salePrice: number | null;
+  images: string[];
+  specs: Record<string, string> | null;
+};
+
+const KEY = "hobbymart_compare";
+const MAX = 4;
 
 export function useCompare() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<CompareItem[]>([]);
 
-  const fetchCompare = useCallback(async () => {
-    try {
-      const res = await fetch("/api/compare");
-      const data = await res.json();
-      setItems(data.items || []);
-    } catch {
-      setItems([]);
-    }
-  }, []);
+  const refresh = useCallback(() => setItems(readList<CompareItem>(KEY)), []);
 
   useEffect(() => {
-    fetchCompare();
-  }, [fetchCompare]);
+    refresh();
+    return subscribe(KEY, refresh);
+  }, [refresh]);
 
-  const toggleItem = async (productId: string) => {
-    const exists = items.find((i: any) => i.id === productId);
-    const res = await fetch("/api/compare", {
-      method: exists ? "DELETE" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId }),
-    });
-    if (res.ok) fetchCompare();
+  // Accepts a full product (to add) or an id string (to remove existing).
+  const toggleItem = (arg: string | CompareItem) => {
+    const id = typeof arg === "string" ? arg : arg.id;
+    const current = readList<CompareItem>(KEY);
+    if (current.some((i) => i.id === id)) {
+      writeList(KEY, current.filter((i) => i.id !== id));
+    } else if (typeof arg !== "string") {
+      if (current.length >= MAX) {
+        toast.error(`You can compare up to ${MAX} products`);
+        return;
+      }
+      writeList(KEY, [...current, arg]);
+    }
   };
 
-  const isInCompare = (productId: string) => items.some((i: any) => i.id === productId);
+  const isInCompare = (id: string) => items.some((i) => i.id === id);
 
   return { items, toggleItem, isInCompare };
 }

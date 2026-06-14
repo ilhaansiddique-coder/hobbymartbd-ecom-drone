@@ -2,77 +2,48 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { CartItem } from "@/lib/types";
+import { readList, writeList, subscribe } from "@/lib/local-store";
 
-function generateSessionId() {
-  if (typeof window !== "undefined") {
-    let id = localStorage.getItem("cart_session_id");
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("cart_session_id", id);
-    }
-    return id;
-  }
-  return "";
-}
+const KEY = "hobbymart_cart";
 
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const sessionId = generateSessionId();
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/cart?sessionId=${sessionId}`);
-      const data = await res.json();
-      setItems(data.items || []);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
+  const refresh = useCallback(() => {
+    setItems(readList<CartItem>(KEY));
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    refresh();
+    return subscribe(KEY, refresh);
+  }, [refresh]);
 
-  const addItem = async (item: Omit<CartItem, "quantity">, quantity = 1) => {
-    const res = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...item, quantity, sessionId }),
-    });
-    if (res.ok) fetchCart();
-    return res.json();
+  const addItem = (item: Omit<CartItem, "quantity">, quantity = 1) => {
+    const current = readList<CartItem>(KEY);
+    const existing = current.find((i) => i.id === item.id);
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      current.push({ ...item, quantity });
+    }
+    writeList(KEY, current);
   };
 
-  const updateQuantity = async (id: string, quantity: number) => {
+  const updateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return removeItem(id);
-    const res = await fetch("/api/cart", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, quantity, sessionId }),
-    });
-    if (res.ok) fetchCart();
+    const current = readList<CartItem>(KEY);
+    const item = current.find((i) => i.id === id);
+    if (item) item.quantity = quantity;
+    writeList(KEY, current);
   };
 
-  const removeItem = async (id: string) => {
-    const res = await fetch("/api/cart", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, sessionId }),
-    });
-    if (res.ok) fetchCart();
+  const removeItem = (id: string) => {
+    writeList(KEY, readList<CartItem>(KEY).filter((i) => i.id !== id));
   };
 
-  const clearCart = async () => {
-    await fetch("/api/cart", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ all: true, sessionId }),
-    });
-    setItems([]);
-  };
+  const clearCart = () => writeList(KEY, []);
 
   const subtotal = items.reduce((sum, item) => {
     const price = item.salePrice ?? item.price;

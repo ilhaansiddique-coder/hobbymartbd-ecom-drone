@@ -127,6 +127,22 @@
   html {
     @apply font-sans;
   }
+  /* Tailwind v4 dropped the default pointer cursor on buttons — restore it so
+     all interactive elements show a hand cursor. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary,
+  label[for],
+  select:not(:disabled),
+  [type="checkbox"]:not(:disabled),
+  [type="radio"]:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /* ---------------------------------------------------------------------------
