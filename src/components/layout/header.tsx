@@ -32,6 +32,7 @@ export function Header() {
   const cartCount = cartItems.reduce((a, b) => a + b.quantity, 0);
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
       {/* Top bar */}
       <div className="hidden lg:flex h-9 items-center justify-between bg-gray-900 px-6 text-xs text-gray-300">
@@ -155,50 +156,71 @@ export function Header() {
         </div>
       )}
 
-      {/* Mobile menu */}
-      {mobileMenu && (
-        <div className="fixed inset-0 z-50 bg-black/50 lg:hidden">
-          <div className="absolute right-0 top-0 h-full w-72 bg-white p-4 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <span className="font-semibold">Menu</span>
-              <button onClick={() => setMobileMenu(false)} className="rounded-lg p-2 hover:bg-gray-100">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <nav className="flex flex-col gap-1">
-              <Link href="/" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-gray-100">Home</Link>
-              <Link href="/products" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-gray-100">Shop</Link>
-              <div className="px-3 py-2 text-sm font-medium text-gray-500">Categories</div>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/products?category=${cat.slug}`}
-                  onClick={() => setMobileMenu(false)}
-                  className="rounded-lg px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-              <div className="my-2 border-t" />
-              <Link href="/wishlist" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-gray-100">Wishlist</Link>
-              <Link href="/compare" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-gray-100">Compare</Link>
-              {!session?.user ? (
-                <Link href="/login" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">Login</Link>
-              ) : (
-                <>
-                  {(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? (
-                    <Link href="/admin/dashboard" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">Dashboard</Link>
-                  ) : (
-                    <Link href="/orders" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">My Orders</Link>
-                  )}
-                  <button onClick={() => { signOut(); setMobileMenu(false); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50">Logout</button>
-                </>
-              )}
-            </nav>
+      </header>
+
+      {/* Mobile menu — OUTSIDE <header> so the header's backdrop-blur doesn't
+          become the containing block for this fixed overlay. */}
+      <div
+        className={`fixed inset-0 z-[100] lg:hidden transition-opacity duration-300 ${
+          mobileMenu ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden={!mobileMenu}
+      >
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMobileMenu(false)}
+        />
+        {/* Sliding panel (solid background so page content can't show through) */}
+        <div
+          className={`absolute right-0 top-0 flex h-full w-80 max-w-[85vw] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+            mobileMenu ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b px-5 py-4">
+            <span className="text-base font-bold text-gray-900">Menu</span>
+            <button
+              onClick={() => setMobileMenu(false)}
+              className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
+          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
+            <Link href="/" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Home</Link>
+            <Link href="/products" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Shop</Link>
+            <div className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Categories</div>
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/products?category=${cat.slug}`}
+                onClick={() => setMobileMenu(false)}
+                className="rounded-lg px-5 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              >
+                {cat.name}
+              </Link>
+            ))}
+            <div className="my-2 border-t" />
+            <Link href="/wishlist" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Wishlist</Link>
+            <Link href="/compare" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Compare</Link>
+            <div className="my-2 border-t" />
+            {!session?.user ? (
+              <Link href="/login" onClick={() => setMobileMenu(false)} className="rounded-lg bg-blue-600 px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-blue-700">Login</Link>
+            ) : (
+              <>
+                {(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? (
+                  <Link href="/admin/dashboard" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">Dashboard</Link>
+                ) : (
+                  <Link href="/orders" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">My Orders</Link>
+                )}
+                <button onClick={() => { signOut(); setMobileMenu(false); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50">Logout</button>
+              </>
+            )}
+          </nav>
         </div>
-      )}
-    </header>
+      </div>
+    </>
   );
 }
 
