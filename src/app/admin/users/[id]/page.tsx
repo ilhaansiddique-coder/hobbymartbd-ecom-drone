@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { UserRoleSelect } from "@/components/admin/role-update";
 import { DeleteButton } from "@/components/admin/delete-button";
+import { UserPasswordReset } from "@/components/admin/user-password-reset";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -124,6 +125,10 @@ export default async function AdminUserDetailPage({
             </div>
           </dl>
         </div>
+      </div>
+
+      <div className="mb-6 max-w-xl">
+        <UserPasswordReset userId={user.id} />
       </div>
 
       {user.address && (

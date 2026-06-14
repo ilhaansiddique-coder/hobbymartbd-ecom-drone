@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@/generated/prisma/enums";
+import bcrypt from "bcryptjs";
 
 export async function GET(
   _req: NextRequest,
@@ -70,6 +71,14 @@ export async function PUT(
   if (body.name !== undefined) data.name = body.name;
   if (body.phone !== undefined) data.phone = body.phone;
   if (body.address !== undefined) data.address = body.address;
+
+  // Admin password reset
+  if (body.password) {
+    if (typeof body.password !== "string" || body.password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    }
+    data.password = await bcrypt.hash(body.password, 12);
+  }
 
   const user = await prisma.user.update({
     where: { id },
