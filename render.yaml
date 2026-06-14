@@ -1,0 +1,22 @@
+# Render Blueprint — deploys HobbyMart as a Node web service.
+# Database stays on Neon; secrets are set in the Render dashboard (sync: false).
+services:
+  - type: web
+    name: hobbymart
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL # Neon pooled connection string
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL # your Render URL, then your custom domain
+        sync: false
+      - key: BLOB_READ_WRITE_TOKEN # optional — for admin image uploads (Vercel Blob)
+        sync: false
