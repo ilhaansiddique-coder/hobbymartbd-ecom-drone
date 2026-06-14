@@ -48,9 +48,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-[80vh]">
+    <div className="lg:flex lg:min-h-[80vh]">
+      {/* Mobile topbar — sits just below the storefront header (h-16) so the
+          admin menu is reachable on small screens. */}
+      <div className="sticky top-16 z-30 flex items-center gap-3 border-b bg-white px-4 py-3 lg:hidden">
+        <button
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open admin menu"
+          className="rounded-lg border p-2 text-gray-700 hover:bg-gray-100"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <span className="text-base font-bold text-gray-900">Admin Panel</span>
+      </div>
+
       {sidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
           <aside className="fixed left-0 top-0 flex h-full w-64 flex-col bg-white p-4 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
@@ -88,12 +101,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </aside>
         </div>
       )}
-      <button
-        onClick={() => setSidebarOpen(true)}
-        className="fixed left-4 top-4 z-40 rounded-lg bg-white p-2 shadow-lg lg:hidden"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
       <aside className="hidden w-64 shrink-0 border-r bg-gray-50 p-4 lg:flex lg:flex-col">
         <div className="mb-6">
           <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
@@ -126,7 +133,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Logout
         </button>
       </aside>
-      <div className="flex-1 p-6">{children}</div>
+      <div className="min-w-0 flex-1 p-4 lg:p-6">{children}</div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/components/admin/local-upload";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { slugify } from "@/lib/utils";
 import Image from "next/image";

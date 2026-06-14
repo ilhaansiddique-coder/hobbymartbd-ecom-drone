@@ -81,10 +81,17 @@ export function Header() {
             <div className="mr-2 h-8 w-16 animate-pulse rounded-lg bg-gray-100"></div>
           ) : session?.user ? (
             <div className="flex items-center gap-2 mr-2">
-              <Link href={(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? "/admin/dashboard" : "/"} className="rounded-lg bg-blue-50 p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 flex items-center">
-                <span className="hidden sm:inline">Dashboard</span>
-                <User className="h-4 w-4 sm:hidden" />
-              </Link>
+              {(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? (
+                <Link href="/admin/dashboard" className="rounded-lg bg-blue-50 p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 flex items-center">
+                  <span className="hidden sm:inline">Dashboard</span>
+                  <User className="h-4 w-4 sm:hidden" />
+                </Link>
+              ) : (
+                <Link href="/orders" className="rounded-lg bg-blue-50 p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 flex items-center">
+                  <span className="hidden sm:inline">My Orders</span>
+                  <User className="h-4 w-4 sm:hidden" />
+                </Link>
+              )}
               <button onClick={() => signOut()} className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hidden sm:block">
                 Logout
               </button>
@@ -179,7 +186,11 @@ export function Header() {
                 <Link href="/login" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">Login</Link>
               ) : (
                 <>
-                  <Link href={(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? "/admin/dashboard" : "/"} onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">Dashboard</Link>
+                  {(session.user as any).role === "ADMIN" || (session.user as any).role === "STAFF" ? (
+                    <Link href="/admin/dashboard" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">Dashboard</Link>
+                  ) : (
+                    <Link href="/orders" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50">My Orders</Link>
+                  )}
                   <button onClick={() => { signOut(); setMobileMenu(false); }} className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50">Logout</button>
                 </>
               )}

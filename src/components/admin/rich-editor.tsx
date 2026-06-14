@@ -33,13 +33,27 @@ export function RichEditor({ value, onChange, placeholder = "Write your content.
     }
   }, [onChange]);
 
+  // The link button asks for a URL only when clicked — never during render.
+  const handleButtonClick = useCallback(
+    (command: string, value?: string) => {
+      if (command === "createLink") {
+        const url = window.prompt("Enter URL:");
+        if (!url) return; // user cancelled or left it blank
+        exec("createLink", url);
+        return;
+      }
+      exec(command, value);
+    },
+    [exec]
+  );
+
   const toolbarButtons = [
     { icon: Bold, command: "bold", title: "Bold" },
     { icon: Italic, command: "italic", title: "Italic" },
     { icon: Heading, command: "formatBlock", value: "h3", title: "Heading" },
     { icon: List, command: "insertUnorderedList", title: "Bullet List" },
     { icon: ListOrdered, command: "insertOrderedList", title: "Numbered List" },
-    { icon: Link, command: "createLink", value: prompt("Enter URL:") || undefined, title: "Link" },
+    { icon: Link, command: "createLink", title: "Link" },
   ];
 
   return (
@@ -49,7 +63,7 @@ export function RichEditor({ value, onChange, placeholder = "Write your content.
           <button
             key={btn.command}
             type="button"
-            onClick={() => exec(btn.command, btn.value)}
+            onClick={() => handleButtonClick(btn.command, btn.value)}
             title={btn.title}
             className="rounded-md p-1.5 text-gray-600 hover:bg-gray-200 hover:text-gray-900"
           >
@@ -66,7 +80,7 @@ export function RichEditor({ value, onChange, placeholder = "Write your content.
         onInput={handleInput}
         onPaste={handlePaste}
         dangerouslySetInnerHTML={{ __html: value }}
-        className="prose prose-sm max-w-none p-4 focus:outline-none min-h-[200px]"
+        className="prose prose-sm max-w-none p-4 text-gray-900 focus:outline-none min-h-[200px]"
         style={{ minHeight }}
         data-placeholder={placeholder}
       />

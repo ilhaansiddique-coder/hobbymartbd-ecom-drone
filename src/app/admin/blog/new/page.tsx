@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RichEditor } from "@/components/admin/rich-editor";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/components/admin/local-upload";
 import { slugify } from "@/lib/utils";
 
 export default function NewBlogPostPage() {
