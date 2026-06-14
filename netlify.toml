@@ -1,0 +1,11 @@
+# Netlify configuration for the HobbyMart Next.js app.
+# The official Next.js plugin is auto-installed by Netlify on detection,
+# but we pin it (and the Node version) here for reliability.
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
