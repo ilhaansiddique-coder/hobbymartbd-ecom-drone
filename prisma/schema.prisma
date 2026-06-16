@@ -179,8 +179,22 @@ model SiteSettings {
   facebookUrl    String?
   instagramUrl   String?
   youtubeUrl     String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+
+  // Top header bar
+  topbarEnabled        Boolean @default(true)
+  topbarText           String  @default("")
+  topbarShowContact    Boolean @default(true)
+  topbarShowTrackOrder Boolean @default(true)
+
+  // Header nav menu — JSON array of { label, href }
+  navLinks Json @default("[]")
+
+  // Footer link columns — JSON array of { title, links: [{ label, href }] }
+  footerColumns Json   @default("[]")
+  copyrightText String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {

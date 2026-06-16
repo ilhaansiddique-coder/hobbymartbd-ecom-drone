@@ -45,31 +45,26 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             )}
           </div>
 
-          <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">Useful Links</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/terms" className="hover:text-white transition-colors">Terms &amp; Conditions</Link></li>
-              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/refund" className="hover:text-white transition-colors">Return &amp; Refund Policy</Link></li>
-              <li><Link href="/faq" className="hover:text-white transition-colors">FAQs</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">My Account</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/login" className="hover:text-white transition-colors">Dashboard</Link></li>
-              <li><Link href="/orders" className="hover:text-white transition-colors">Orders</Link></li>
-              <li><Link href="/wishlist" className="hover:text-white transition-colors">Wishlist</Link></li>
-              <li><Link href="/cart" className="hover:text-white transition-colors">Cart</Link></li>
-            </ul>
-          </div>
+          {settings.footerColumns.map((col, ci) => (
+            <div key={ci}>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">{col.title}</h3>
+              <ul className="space-y-2 text-sm">
+                {col.links.map((link, li) => (
+                  <li key={li}>
+                    {/^https?:\/\//i.test(link.href) ? (
+                      <a href={link.href} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">{link.label}</a>
+                    ) : (
+                      <Link href={link.href} className="hover:text-white transition-colors">{link.label}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">Find Us</h3>
             <div className="space-y-3 text-sm">
-              {settings.address && <p className="text-gray-400">{settings.address}</p>}
               {settings.phone && (
                 <p>📞 <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="hover:text-white">{settings.phone}</a></p>
               )}
@@ -81,7 +76,11 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         </div>
 
         <div className="mt-10 border-t border-gray-800 pt-6 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} {name}. All rights reserved.</p>
+          <p>
+            {settings.copyrightText
+              ? settings.copyrightText.replace(/\{year\}/gi, String(new Date().getFullYear()))
+              : `© ${new Date().getFullYear()} ${name}. All rights reserved.`}
+          </p>
         </div>
       </div>
     </footer>

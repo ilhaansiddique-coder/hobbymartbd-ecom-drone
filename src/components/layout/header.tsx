@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { ShoppingCart, Heart, User, Menu, X, Search, ChevronDown, GitCompare, Moon, Sun } from "lucide-react";
+import { ShoppingCart, Heart, User, Menu, X, Search, ChevronDown, GitCompare, Moon, Sun, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/lib/hooks/use-cart";
@@ -42,15 +42,22 @@ export function Header({ settings, categories }: { settings: SiteSettings; categ
     <>
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur">
       {/* Top bar */}
-      <div className="hidden lg:flex h-9 items-center justify-between bg-gray-900 px-6 text-xs text-gray-300">
-        <div className="flex items-center gap-4">
-          {settings.phone && <span>📞 {settings.phone}</span>}
-          {settings.email && <span>✉️ {settings.email}</span>}
+      {settings.topbarEnabled && (
+        <div className="hidden lg:flex h-9 items-center justify-between bg-gray-900 px-6 text-xs text-gray-300">
+          <div className="flex items-center gap-4">
+            {settings.topbarShowContact && settings.phone && (
+              <TopbarPhone phone={settings.phone} whatsappNumber={settings.whatsappNumber} whatsappText={settings.whatsappText} />
+            )}
+            {settings.topbarShowContact && settings.email && (
+              <a href={`mailto:${settings.email}`} className="hover:text-white">✉️ {settings.email}</a>
+            )}
+          </div>
+          {settings.topbarText && <span className="truncate px-4 text-center text-gray-200">{settings.topbarText}</span>}
+          <div className="flex items-center gap-4">
+            {settings.topbarShowTrackOrder && <Link href="/track-order" className="hover:text-white">Track Order</Link>}
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href="/track-order" className="hover:text-white">Track Order</Link>
-        </div>
-      </div>
+      )}
 
       {/* Main header */}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
@@ -61,26 +68,16 @@ export function Header({ settings, categories }: { settings: SiteSettings; categ
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-1">
-          <Link href="/" className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Home</Link>
-          <Link href="/products" className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Shop</Link>
-          <div className="group relative">
-            <button className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-              Categories <ChevDown className="h-3 w-3" />
-            </button>
-            <div className="invisible absolute top-full left-0 z-50 mt-1 w-56 rounded-xl border bg-white p-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/products?category=${cat.slug}`}
-                  className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <Link href="/blog" className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Blog</Link>
-          <Link href="/contact" className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">Contact</Link>
+          {settings.navLinks.map((link, i) => (
+            <Fragment key={`${link.href}-${i}`}>
+              <NavItem href={link.href} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                {link.label}
+              </NavItem>
+              {link.href === "/products" && <CategoriesDropdown categories={categories} />}
+            </Fragment>
+          ))}
+          {/* Fallback: if no "Shop" (/products) link, still show the Categories menu */}
+          {!settings.navLinks.some((l) => l.href === "/products") && <CategoriesDropdown categories={categories} />}
         </nav>
 
         {/* Actions */}
@@ -197,8 +194,16 @@ export function Header({ settings, categories }: { settings: SiteSettings; categ
             </button>
           </div>
           <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-            <Link href="/" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Home</Link>
-            <Link href="/products" onClick={() => setMobileMenu(false)} className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100">Shop</Link>
+            {settings.navLinks.map((link, i) => (
+              <NavItem
+                key={`${link.href}-${i}`}
+                href={link.href}
+                onClick={() => setMobileMenu(false)}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                {link.label}
+              </NavItem>
+            ))}
             <div className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Categories</div>
             {categories.map((cat) => (
               <Link
@@ -235,4 +240,88 @@ export function Header({ settings, categories }: { settings: SiteSettings; categ
 
 function ChevDown(props: any) {
   return <ChevronDown {...props} />;
+}
+
+// Top-bar phone: click to choose calling directly (tel:) or messaging on
+// WhatsApp (wa.me). WhatsApp uses the configured WhatsApp number/text, falling
+// back to the phone number's digits when no WhatsApp number is set.
+function TopbarPhone({ phone, whatsappNumber, whatsappText }: { phone: string; whatsappNumber: string; whatsappText: string }) {
+  const [open, setOpen] = useState(false);
+  const telHref = `tel:${phone.replace(/[^\d+]/g, "")}`;
+  const waDigits = (whatsappNumber || phone).replace(/\D/g, "");
+  const waHref = `https://wa.me/${waDigits}${whatsappText ? `?text=${encodeURIComponent(whatsappText)}` : ""}`;
+
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-1 hover:text-white" aria-haspopup="menu" aria-expanded={open}>
+        📞 {phone} <ChevDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          {/* click-away layer */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute left-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-lg border bg-white py-1 text-gray-700 shadow-lg" role="menu">
+            <a href={telHref} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-100" role="menuitem">
+              <Phone className="h-3.5 w-3.5 text-blue-600" /> Call via phone
+            </a>
+            {waDigits && (
+              <a href={waHref} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-100" role="menuitem">
+                <MessageCircle className="h-3.5 w-3.5 text-green-600" /> Chat on WhatsApp
+              </a>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Renders an internal Next <Link> or an external <a> (new tab) depending on href.
+function NavItem({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const isExternal = /^https?:\/\//i.test(href);
+  if (isExternal) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} onClick={onClick}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
+}
+
+// The DB-driven Categories mega-dropdown shown in the desktop header.
+function CategoriesDropdown({ categories }: { categories: NavCategory[] }) {
+  if (categories.length === 0) return null;
+  return (
+    <div className="group relative">
+      <button className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+        Categories <ChevDown className="h-3 w-3" />
+      </button>
+      <div className="invisible absolute top-full left-0 z-50 mt-1 w-56 rounded-xl border bg-white p-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+        {categories.map((cat) => (
+          <Link
+            key={cat.slug}
+            href={`/products?category=${cat.slug}`}
+            className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            {cat.name}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
