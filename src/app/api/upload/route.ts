@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
   const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
   const useCloudinary = !!(cloudName && uploadPreset);
   const useVercelBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
-  const onNetlify = !!process.env.NETLIFY;
   const results: { url: string; name: string }[] = [];
 
   try {
@@ -66,15 +65,13 @@ export async function POST(req: NextRequest) {
         });
         results.push({ url: blob.url, name: file.name });
       }
-    } else if (onNetlify) {
-      const { getStore } = await import("@netlify/blobs");
-      const store = getStore("uploads");
-      for (const file of files) {
-        const key = `${crypto.randomUUID()}.${extOf(file.name)}`;
-        await store.set(key, await file.arrayBuffer(), { metadata: { contentType: file.type } });
-        results.push({ url: `/api/uploads/${key}`, name: file.name });
-      }
+    } else if (process.env.NODE_ENV === "production") {
+      // Serverless hosts have a read-only filesystem — require a cloud backend.
+      throw new Error(
+        "Image storage is not configured. Set CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in your hosting environment variables, then redeploy."
+      );
     } else {
+      // Local dev only: write to public/uploads, served at /uploads/<key>.
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       await mkdir(uploadDir, { recursive: true });
       for (const file of files) {
