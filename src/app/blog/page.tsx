@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: cached, refreshed every 60s
 
 export const metadata = {
   title: "Blog - Hobby Mart",

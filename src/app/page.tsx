@@ -4,7 +4,7 @@ import { CategoryGrid } from "@/components/home/category-grid";
 import { ProductGrid } from "@/components/product/product-grid";
 import { HomeReviews } from "@/components/home/home-reviews";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: cached, refreshed every 60s
 
 export default async function HomePage() {
   const [categories, featuredProducts, newProducts, recentReviews] = await Promise.all([

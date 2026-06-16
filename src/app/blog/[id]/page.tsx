@@ -4,7 +4,20 @@ import { ArrowLeft, Calendar, User } from "lucide-react";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: cached, refreshed every 60s
+
+// Prerender published blog posts at build; new ones render on-demand.
+export async function generateStaticParams() {
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { id: true },
+    });
+    return posts.map((p) => ({ id: p.id }));
+  } catch {
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

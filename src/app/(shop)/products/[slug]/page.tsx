@@ -4,7 +4,20 @@ import type { Metadata } from "next";
 import { ProductDetail } from "@/components/product/product-detail";
 import { ProductGrid } from "@/components/product/product-grid";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: cached, refreshed every 60s
+
+// Prerender published product pages at build; new ones render on-demand.
+export async function generateStaticParams() {
+  try {
+    const products = await prisma.product.findMany({
+      where: { published: true },
+      select: { slug: true },
+    });
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
+}
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
