@@ -5,10 +5,11 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
-// Image upload with a storage backend chosen by environment:
-//   1. Vercel Blob   — if BLOB_READ_WRITE_TOKEN is set (works anywhere)
-//   2. Netlify Blobs — when running on Netlify (process.env.NETLIFY), served via /api/uploads/<key>
-//   3. Local disk    — dev fallback (public/uploads, served at /uploads/<key>)
+// Image upload with a storage backend chosen by environment (first match wins):
+//   1. Cloudinary    — if CLOUDINARY_CLOUD_NAME + CLOUDINARY_UPLOAD_PRESET set (recommended for prod)
+//   2. Vercel Blob   — if BLOB_READ_WRITE_TOKEN set
+//   3. Netlify Blobs — when running on Netlify, served via /api/uploads/<key>
+//   4. Local disk    — dev fallback (public/uploads, served at /uploads/<key>)
 export const runtime = "nodejs";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
@@ -35,16 +36,31 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const useCloudinary = !!(cloudName && uploadPreset);
   const useVercelBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
   const onNetlify = !!process.env.NETLIFY;
   const results: { url: string; name: string }[] = [];
 
   try {
-    if (useVercelBlob) {
+    if (useCloudinary) {
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("upload_preset", uploadPreset!);
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || "Cloudinary upload failed");
+        results.push({ url: data.secure_url, name: file.name });
+      }
+    } else if (useVercelBlob) {
       const { put } = await import("@vercel/blob");
       for (const file of files) {
-        const ext = extOf(file.name);
-        const blob = await put(`uploads/${crypto.randomUUID()}.${ext}`, file, {
+        const blob = await put(`uploads/${crypto.randomUUID()}.${extOf(file.name)}`, file, {
           access: "public",
           contentType: file.type,
         });
@@ -55,9 +71,7 @@ export async function POST(req: NextRequest) {
       const store = getStore("uploads");
       for (const file of files) {
         const key = `${crypto.randomUUID()}.${extOf(file.name)}`;
-        await store.set(key, await file.arrayBuffer(), {
-          metadata: { contentType: file.type },
-        });
+        await store.set(key, await file.arrayBuffer(), { metadata: { contentType: file.type } });
         results.push({ url: `/api/uploads/${key}`, name: file.name });
       }
     } else {
@@ -70,8 +84,9 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed on the server";
     console.error("Upload failed:", err);
-    return NextResponse.json({ error: "Upload failed on the server" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 
   return NextResponse.json({ files: results });
