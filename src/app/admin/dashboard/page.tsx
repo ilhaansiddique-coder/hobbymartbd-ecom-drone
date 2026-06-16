@@ -21,7 +21,8 @@ interface DashboardData {
     total: number;
     status: string;
     createdAt: string;
-    user: { name: string | null; email: string };
+    email: string;
+    user: { name: string | null; email: string } | null;
   }[];
   ordersByStatus: { status: string; count: number }[];
   revenueByMonth: { month: string; revenue: number }[];
@@ -218,8 +219,8 @@ export default function AdminDashboard() {
                       <tr key={order.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 font-mono text-xs">#{order.id.slice(0, 8)}</td>
                         <td className="px-4 py-3">
-                          <p className="font-medium">{order.user.name || "N/A"}</p>
-                          <p className="text-xs text-gray-500">{order.user.email}</p>
+                          <p className="font-medium">{order.user?.name || "Guest"}</p>
+                          <p className="text-xs text-gray-500">{order.user?.email || order.email}</p>
                         </td>
                         <td className="px-4 py-3 font-medium">{formatPrice(order.total)}</td>
                         <td className="px-4 py-3">
