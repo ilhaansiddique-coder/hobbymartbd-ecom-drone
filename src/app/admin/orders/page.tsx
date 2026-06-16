@@ -127,7 +127,7 @@ export default function AdminOrdersPage() {
           <Link href={`/admin/orders/${order.id}`} className="text-blue-600 hover:text-blue-800 text-xs font-medium">
             View
           </Link>
-          <OrderStatusSelect orderId={order.id} currentStatus={order.status} />
+          <OrderStatusSelect orderId={order.id} currentStatus={order.status} onChanged={fetchOrders} />
         </div>
       ),
     },
