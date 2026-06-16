@@ -21,20 +21,14 @@ const DEFAULTS: SiteSettings = {
   youtubeUrl: null,
 };
 
-// Loads the single site-settings row (creating it with defaults on first run).
-// `cache` dedupes the query within a single request (header + footer + layout).
-// Falls back to defaults if the DB is briefly unreachable so it never breaks a render.
+// Loads the single site-settings row (read fresh so admin changes show up right
+// away). `cache` dedupes the query within a request. Falls back to defaults if
+// the DB is unreachable so it never breaks a render. (The row is created by the
+// seed / the admin settings API.)
 export const getSettings = cache(async (): Promise<SiteSettings> => {
   try {
-    let settings = await prisma.siteSettings.findUnique({ where: { id: "singleton" } });
-    if (!settings) {
-      settings = await prisma.siteSettings.upsert({
-        where: { id: "singleton" },
-        update: {},
-        create: { id: "singleton" },
-      });
-    }
-    return settings;
+    const settings = await prisma.siteSettings.findUnique({ where: { id: "singleton" } });
+    return settings ?? DEFAULTS;
   } catch {
     return DEFAULTS;
   }

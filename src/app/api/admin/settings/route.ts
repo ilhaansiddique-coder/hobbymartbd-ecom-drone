@@ -35,5 +35,6 @@ export async function PUT(req: NextRequest) {
     update: data,
     create: { id: "singleton", ...data },
   });
+
   return NextResponse.json({ settings });
 }

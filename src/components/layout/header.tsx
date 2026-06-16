@@ -14,15 +14,9 @@ import { useCompare } from "@/lib/hooks/use-compare";
 import { useTheme } from "@/components/theme-provider";
 import type { SiteSettings } from "@/lib/site-config";
 
-const categories = [
-  { name: "DJI", slug: "dji" },
-  { name: "Professional Drone", slug: "professional-drone" },
-  { name: "Beginner Drone", slug: "beginner-drone" },
-  { name: "Drone Accessories", slug: "drone-accessories" },
-  { name: "Camera", slug: "camera" },
-];
+type NavCategory = { id: string; name: string; slug: string };
 
-export function Header({ settings }: { settings: SiteSettings }) {
+export function Header({ settings, categories }: { settings: SiteSettings; categories: NavCategory[] }) {
   const router = useRouter();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
