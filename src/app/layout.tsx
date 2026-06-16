@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/lib/theme-script";
+import NextTopLoader from "nextjs-toploader";
 import { getSettings } from "@/lib/settings";
 import { getNavCategories } from "@/lib/categories";
 import { BrandStyle } from "@/components/layout/brand-style";
@@ -40,6 +41,13 @@ export default async function RootLayout({
       <body className="min-h-screen flex flex-col antialiased font-sans" suppressHydrationWarning>
         <ThemeScript />
         <BrandStyle settings={settings} />
+        <NextTopLoader
+          color={settings.primaryColor || "#2563eb"}
+          height={3}
+          showSpinner={true}
+          shadow="0 0 10px rgba(0,0,0,0.25)"
+          zIndex={2000}
+        />
         <Providers>
           <Header settings={settings} categories={categories} />
           <main className="flex-1">{children}</main>
